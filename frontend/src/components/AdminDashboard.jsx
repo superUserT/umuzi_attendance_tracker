@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import QRCode from 'react-qr-code';
-import * as XLSX from 'xlsx'; // Import SheetJS for Excel
+import * as XLSX from 'xlsx';
 import { 
   Box, Button, Card, CardContent, Container, Grid, TextField, 
   Typography, Select, MenuItem, FormControl, InputLabel, 
   Table as MuiTable, TableBody, TableCell as MuiTableCell, 
   TableContainer, TableHead, TableRow as MuiTableRow, 
-  Paper, Chip, Stack, IconButton, Tooltip, Collapse,
-  Dialog, DialogTitle, DialogContent
+  Paper, Chip, Stack, IconButton, Tooltip, Dialog, DialogTitle, DialogContent
 } from '@mui/material';
 import { 
   Calendar, Users, Trophy, Clock, Plus, Download, 
@@ -21,15 +20,17 @@ const AdminDashboard = () => {
   const [formData, setFormData] = useState({
     title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60
   });
-  
-  // State for "View Details" modal
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const appUrl = window.location.origin;
+  // 1. GET API URL FROM ENV
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  
+  // 2. GET FRONTEND URL (For QR Codes)
+  const APP_URL = window.location.origin;
 
   const fetchData = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/admin/data');
+      const res = await axios.get(`${API_URL}/api/admin/data`);
       setEvents(res.data.events);
       setUsers(res.data.users);
     } catch (err) {
@@ -41,18 +42,17 @@ const AdminDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post('http://localhost:5000/api/events', formData);
-    fetchData(); 
-    // Reset form
-    setFormData({ title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60 });
+    try {
+      await axios.post(`${API_URL}/api/events`, formData);
+      fetchData(); 
+      setFormData({ title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60 });
+    } catch (err) {
+      alert("Error creating event");
+    }
   };
 
-  // --- EXPORT TO EXCEL FUNCTION ---
   const exportToExcel = () => {
-    // We create a "flat" list for Excel: One row per attendance record
-    // This allows for Pivot Tables in Excel later
     const data = [];
-
     users.forEach(user => {
       if (user.attendanceLog && user.attendanceLog.length > 0) {
         user.attendanceLog.forEach(log => {
@@ -60,7 +60,7 @@ const AdminDashboard = () => {
             "First Name": user.name,
             "Surname": user.surname,
             "Email": user.email,
-            "Total User Points": user.totalPoints,
+            "Total Points": user.totalPoints,
             "Event Attended": log.eventTitle,
             "Event Host": log.eventHost,
             "Points Gained": log.pointsEarned,
@@ -68,12 +68,11 @@ const AdminDashboard = () => {
           });
         });
       } else {
-        // Include users with 0 events
         data.push({
           "First Name": user.name,
           "Surname": user.surname,
           "Email": user.email,
-          "Total User Points": user.totalPoints,
+          "Total Points": user.totalPoints,
           "Event Attended": "N/A",
           "Event Host": "N/A",
           "Points Gained": 0,
@@ -110,7 +109,6 @@ const AdminDashboard = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       
-      {/* HEADER */}
       <Box sx={{ textAlign: 'center', mb: 6 }}>
         <Typography variant="h3" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
           <Trophy color="#f59e0b" size={40} /> Gamified Attendance
@@ -142,7 +140,6 @@ const AdminDashboard = () => {
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})} 
                 />
-                
                 <FormControl fullWidth>
                   <InputLabel>Event Type</InputLabel>
                   <Select
@@ -155,13 +152,11 @@ const AdminDashboard = () => {
                     <MenuItem value="in_person">In Person (15 pts)</MenuItem>
                   </Select>
                 </FormControl>
-
                 <TextField 
                   label="Duration (Minutes)" type="number" variant="outlined" fullWidth required
                   value={formData.durationMinutes}
                   onChange={e => setFormData({...formData, durationMinutes: e.target.value})} 
                 />
-
                 <Button variant="contained" size="large" type="submit" startIcon={<Plus size={20} />} sx={{ py: 1.5, fontWeight: 'bold' }}>
                   Generate Event
                 </Button>
@@ -187,7 +182,6 @@ const AdminDashboard = () => {
                   Export Excel
                 </Button>
               </Stack>
-              
               <TableContainer component={Paper} sx={{ maxHeight: 400, boxShadow: 'none', border: '1px solid #e0e0e0', borderRadius: 2 }}>
                 <MuiTable stickyHeader>
                   <TableHead>
@@ -226,7 +220,7 @@ const AdminDashboard = () => {
         </Grid>
       </Grid>
 
-      {/* ACTIVE EVENTS & QR CODES */}
+      {/* ACTIVE EVENTS */}
       <Box sx={{ mt: 8, width: '100%' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: 4 }}>
           Active Events
@@ -240,13 +234,22 @@ const AdminDashboard = () => {
                   <Typography variant="body2" color="text.secondary">Host: {event.host}</Typography>
                   <Typography variant="caption" display="block" sx={{ mb: 2 }}>{event.description}</Typography>
                   
+                  {/* QR CODE LINK USES APP_URL (Frontend URL) */}
                   <Box sx={{ p: 2, bgcolor: 'white', border: '1px dashed #ccc', borderRadius: 2, display: 'inline-block' }}>
-                    <QRCode id={`qr-${event._id}`} value={`${appUrl}/attend/${event._id}`} size={150} />
+                    <QRCode id={`qr-${event._id}`} value={`${APP_URL}/attend/${event._id}`} size={150} />
                   </Box>
                   
                   <Stack direction="row" justifyContent="center" gap={1} mt={2}>
-                    <IconButton onClick={() => downloadQR(event._id, event.title)} color="primary"><Download size={20} /></IconButton>
-                    <IconButton onClick={() => navigator.clipboard.writeText(`${appUrl}/attend/${event._id}`)}><Share2 size={20} /></IconButton>
+                    <Tooltip title="Download QR">
+                        <IconButton onClick={() => downloadQR(event._id, event.title)} color="primary">
+                          <Download size={20} />
+                        </IconButton>
+                     </Tooltip>
+                     <Tooltip title="Copy Link">
+                        <IconButton onClick={() => navigator.clipboard.writeText(`${APP_URL}/attend/${event._id}`)}>
+                          <Share2 size={20} />
+                        </IconButton>
+                     </Tooltip>
                   </Stack>
                 </CardContent>
               </Card>
@@ -255,7 +258,7 @@ const AdminDashboard = () => {
         </Grid>
       </Box>
 
-      {/* USER DETAILS DIALOG (POPUP) */}
+      {/* USER DETAILS DIALOG */}
       <Dialog open={!!selectedUser} onClose={() => setSelectedUser(null)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <User /> Attendance History: {selectedUser?.name}
@@ -279,7 +282,6 @@ const AdminDashboard = () => {
           )}
         </DialogContent>
       </Dialog>
-
     </Container>
   );
 };

@@ -2,16 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { 
-  Box, 
-  Button, 
-  Card, 
-  CardContent, 
-  Container, 
-  TextField, 
-  Typography, 
-  CircularProgress,
-  Alert,
-  Stack
+  Box, Button, Card, CardContent, Container, TextField, 
+  Typography, CircularProgress, Alert, Stack
 } from '@mui/material';
 import { CheckCircle, XCircle, UserCheck } from 'lucide-react';
 
@@ -22,27 +14,29 @@ const AttendanceForm = () => {
   const [formData, setFormData] = useState({ name: '', surname: '', email: '' });
   const [errorMsg, setErrorMsg] = useState('');
 
+  // 1. GET API URL FROM ENV
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   useEffect(() => {
-    // Validate QR Code on load
-    axios.get(`http://localhost:5000/api/events/${eventId}/validate`)
+    // Validate QR Code using API_URL
+    axios.get(`${API_URL}/api/events/${eventId}/validate`)
       .then(res => {
         setEventDetails(res.data);
         setStatus('valid');
       })
       .catch(() => setStatus('expired'));
-  }, [eventId]);
+  }, [eventId, API_URL]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/attend', { ...formData, eventId });
+      // Submit attendance using API_URL
+      await axios.post(`${API_URL}/api/attend`, { ...formData, eventId });
       setStatus('success');
     } catch (err) {
       setErrorMsg(err.response?.data?.error || 'Error submitting');
     }
   };
-
-  // --- RENDERING STATES ---
 
   if (status === 'loading') return (
     <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -83,7 +77,10 @@ const AttendanceForm = () => {
              <Typography variant="h5" component="h1" align="center" sx={{ mt: 1, fontWeight: 'bold' }}>
               {eventDetails.eventTitle}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" align="center">
+              Host: {eventDetails.host}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Enter details to claim <b>{eventDetails.points} points</b>
             </Typography>
           </Stack>
@@ -92,34 +89,22 @@ const AttendanceForm = () => {
 
           <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField 
-              label="First Name" 
-              variant="outlined" 
-              fullWidth 
-              required
+              label="First Name" variant="outlined" fullWidth required
               value={formData.name}
               onChange={e => setFormData({...formData, name: e.target.value})}
             />
             <TextField 
-              label="Surname" 
-              variant="outlined" 
-              fullWidth 
-              required
+              label="Surname" variant="outlined" fullWidth required
               value={formData.surname}
               onChange={e => setFormData({...formData, surname: e.target.value})}
             />
             <TextField 
-              label="Email Address" 
-              type="email"
-              variant="outlined" 
-              fullWidth 
-              required
+              label="Email Address" type="email" variant="outlined" fullWidth required
               value={formData.email}
               onChange={e => setFormData({...formData, email: e.target.value})}
             />
             <Button 
-              variant="contained" 
-              size="large" 
-              type="submit" 
+              variant="contained" size="large" type="submit" 
               sx={{ mt: 2, py: 1.5, fontSize: '1.1rem', fontWeight: 'bold' }}
             >
               Confirm Attendance
