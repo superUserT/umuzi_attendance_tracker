@@ -15,7 +15,7 @@ app.use(express.json());
 
 const allowedOrigins = [
   'http://localhost:5173',                  // Your local frontend
-  'umuziattendancetracker-production.up.railway.app' // Your future deployed frontend
+  'https://umuziattendancetracker-production.up.railway.app' // Your future deployed frontend
 ];
 
 app.use(cors({
