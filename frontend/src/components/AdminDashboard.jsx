@@ -22,10 +22,10 @@ const AdminDashboard = () => {
   });
   const [selectedUser, setSelectedUser] = useState(null);
 
-  // 1. GET API URL FROM ENV
+
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   
-  // 2. GET FRONTEND URL (For QR Codes)
+
   const APP_URL = window.location.origin;
 
   const fetchData = async () => {
@@ -117,7 +117,7 @@ const AdminDashboard = () => {
 
       <Grid container spacing={4} justifyContent="center">
         
-        {/* CREATE EVENT FORM */}
+       
         <Grid item xs={12} md={5}>
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
             <CardContent>
@@ -165,7 +165,7 @@ const AdminDashboard = () => {
           </Card>
         </Grid>
 
-        {/* LEADERBOARD */}
+       
         <Grid item xs={12} md={7}>
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
             <CardContent>
@@ -220,7 +220,7 @@ const AdminDashboard = () => {
         </Grid>
       </Grid>
 
-      {/* ACTIVE EVENTS */}
+     
       <Box sx={{ mt: 8, width: '100%' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: 4 }}>
           Active Events
@@ -234,7 +234,7 @@ const AdminDashboard = () => {
                   <Typography variant="body2" color="text.secondary">Host: {event.host}</Typography>
                   <Typography variant="caption" display="block" sx={{ mb: 2 }}>{event.description}</Typography>
                   
-                  {/* QR CODE LINK USES APP_URL (Frontend URL) */}
+                 
                   <Box sx={{ p: 2, bgcolor: 'white', border: '1px dashed #ccc', borderRadius: 2, display: 'inline-block' }}>
                     <QRCode id={`qr-${event._id}`} value={`${APP_URL}/attend/${event._id}`} size={150} />
                   </Box>
@@ -258,7 +258,7 @@ const AdminDashboard = () => {
         </Grid>
       </Box>
 
-      {/* USER DETAILS DIALOG */}
+    
       <Dialog open={!!selectedUser} onClose={() => setSelectedUser(null)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <User /> Attendance History: {selectedUser?.name}

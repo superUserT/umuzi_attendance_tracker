@@ -9,16 +9,15 @@ import { CheckCircle, XCircle, UserCheck } from 'lucide-react';
 
 const AttendanceForm = () => {
   const { eventId } = useParams();
-  const [status, setStatus] = useState('loading'); // loading, valid, expired, success
+  const [status, setStatus] = useState('loading'); 
   const [eventDetails, setEventDetails] = useState(null);
   const [formData, setFormData] = useState({ name: '', surname: '', email: '' });
   const [errorMsg, setErrorMsg] = useState('');
 
-  // 1. GET API URL FROM ENV
+ 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
-    // Validate QR Code using API_URL
     axios.get(`${API_URL}/api/events/${eventId}/validate`)
       .then(res => {
         setEventDetails(res.data);
@@ -30,7 +29,6 @@ const AttendanceForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Submit attendance using API_URL
       await axios.post(`${API_URL}/api/attend`, { ...formData, eventId });
       setStatus('success');
     } catch (err) {
