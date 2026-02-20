@@ -14,7 +14,7 @@ app.use(express.json());
 
 const allowedOrigins = [
   'http://localhost:5173', 
-  prorcess.env.FRONTEND_URL
+  process.env.FRONTEND_URL
 ];
 
 app.use(cors({
