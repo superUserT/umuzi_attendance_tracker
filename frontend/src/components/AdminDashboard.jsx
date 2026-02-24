@@ -9,10 +9,7 @@ import {
   TableContainer, TableHead, TableRow as MuiTableRow, 
   Paper, Chip, Stack, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, Divider
 } from '@mui/material';
-import { 
-  Calendar, Users, Trophy, Plus, Download, 
-  FileSpreadsheet, Share2, Info, User
-} from 'lucide-react';
+import { Calendar, Users, Trophy, Plus, Download, FileSpreadsheet, Share2, Info, User } from 'lucide-react';
 
 const AdminDashboard = () => {
   const [events, setEvents] = useState([]);
@@ -28,10 +25,23 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/data`);
-      setEvents(res.data.events);
-      setUsers(res.data.users);
+      
+      // SAFETY CHECKS: Prevents the "map is undefined" crash
+      if (res.data && Array.isArray(res.data.events)) {
+        setEvents(res.data.events);
+      } else {
+        setEvents([]); 
+      }
+
+      if (res.data && Array.isArray(res.data.users)) {
+        setUsers(res.data.users);
+      } else {
+        setUsers([]);
+      }
     } catch (err) {
       console.error("Error fetching data:", err);
+      setEvents([]);
+      setUsers([]);
     }
   };
 
@@ -62,7 +72,6 @@ const AdminDashboard = () => {
             "Event Host": log.eventHost,
             "Points Gained": log.pointsEarned,
             "Date Scanned": new Date(log.dateScanned).toLocaleString(),
-            // Added new fields to the Excel export
             "Motivation": log.motivation || "N/A",
             "Comms Channel": log.commChannel || "N/A",
             "Fun Activity": log.funActivity || "N/A",
@@ -72,19 +81,9 @@ const AdminDashboard = () => {
         });
       } else {
         data.push({
-          "First Name": user.name,
-          "Surname": user.surname,
-          "Email": user.email,
-          "Total Points": user.totalPoints,
-          "Event Attended": "N/A",
-          "Event Host": "N/A",
-          "Points Gained": 0,
-          "Date Scanned": "N/A",
-          "Motivation": "N/A",
-          "Comms Channel": "N/A",
-          "Fun Activity": "N/A",
-          "Umuzi Metaphor": "N/A",
-          "Looking Forward To": "N/A"
+          "First Name": user.name, "Surname": user.surname, "Email": user.email, "Total Points": user.totalPoints,
+          "Event Attended": "N/A", "Event Host": "N/A", "Points Gained": 0, "Date Scanned": "N/A",
+          "Motivation": "N/A", "Comms Channel": "N/A", "Fun Activity": "N/A", "Umuzi Metaphor": "N/A", "Looking Forward To": "N/A"
         });
       }
     });
@@ -102,13 +101,11 @@ const AdminDashboard = () => {
     const ctx = canvas.getContext("2d");
     const img = new Image();
     img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = img.width; canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
-      const pngFile = canvas.toDataURL("image/png");
       const downloadLink = document.createElement("a");
       downloadLink.download = `${eventTitle}-QR.png`;
-      downloadLink.href = pngFile;
+      downloadLink.href = canvas.toDataURL("image/png");
       downloadLink.click();
     };
     img.src = "data:image/svg+xml;base64," + btoa(svgData);
@@ -116,7 +113,6 @@ const AdminDashboard = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      
       <Box sx={{ textAlign: 'center', mb: 6 }}>
         <Typography variant="h3" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
           <Trophy color="#f59e0b" size={40} /> Gamified Attendance
@@ -124,7 +120,6 @@ const AdminDashboard = () => {
       </Box>
 
       <Grid container spacing={4} justifyContent="center">
-        
         <Grid item xs={12} md={5}>
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
             <CardContent>
@@ -132,41 +127,19 @@ const AdminDashboard = () => {
                 <Calendar className="text-blue-600" /> Create Event
               </Typography>
               <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                <TextField 
-                  label="Event Title" variant="outlined" fullWidth required
-                  value={formData.title}
-                  onChange={e => setFormData({...formData, title: e.target.value})} 
-                />
-                <TextField 
-                  label="Host Name" variant="outlined" fullWidth required
-                  value={formData.host}
-                  onChange={e => setFormData({...formData, host: e.target.value})} 
-                />
-                <TextField 
-                  label="Description" variant="outlined" fullWidth multiline rows={2}
-                  value={formData.description}
-                  onChange={e => setFormData({...formData, description: e.target.value})} 
-                />
+                <TextField label="Event Title" variant="outlined" fullWidth required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+                <TextField label="Host Name" variant="outlined" fullWidth required value={formData.host} onChange={e => setFormData({...formData, host: e.target.value})} />
+                <TextField label="Description" variant="outlined" fullWidth multiline rows={2} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                 <FormControl fullWidth>
                   <InputLabel>Event Type</InputLabel>
-                  <Select
-                    value={formData.eventType}
-                    label="Event Type"
-                    onChange={e => setFormData({...formData, eventType: e.target.value})}
-                  >
+                  <Select value={formData.eventType} label="Event Type" onChange={e => setFormData({...formData, eventType: e.target.value})}>
                     <MenuItem value="short_online">Short Online (5 pts)</MenuItem>
                     <MenuItem value="long_online">Long Online (10 pts)</MenuItem>
                     <MenuItem value="in_person">In Person (15 pts)</MenuItem>
                   </Select>
                 </FormControl>
-                <TextField 
-                  label="Duration (Minutes)" type="number" variant="outlined" fullWidth required
-                  value={formData.durationMinutes}
-                  onChange={e => setFormData({...formData, durationMinutes: e.target.value})} 
-                />
-                <Button variant="contained" size="large" type="submit" startIcon={<Plus size={20} />} sx={{ py: 1.5, fontWeight: 'bold' }}>
-                  Generate Event
-                </Button>
+                <TextField label="Duration (Minutes)" type="number" variant="outlined" fullWidth required value={formData.durationMinutes} onChange={e => setFormData({...formData, durationMinutes: e.target.value})} />
+                <Button variant="contained" size="large" type="submit" startIcon={<Plus size={20} />} sx={{ py: 1.5, fontWeight: 'bold' }}>Generate Event</Button>
               </Box>
             </CardContent>
           </Card>
@@ -176,17 +149,8 @@ const AdminDashboard = () => {
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
             <CardContent>
               <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}>
-                  <Users className="text-green-600" /> Leaderboard
-                </Typography>
-                <Button 
-                  variant="outlined" color="success"
-                  startIcon={<FileSpreadsheet size={18} />} 
-                  onClick={exportToExcel}
-                  size="small"
-                >
-                  Export Excel
-                </Button>
+                <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}><Users className="text-green-600" /> Leaderboard</Typography>
+                <Button variant="outlined" color="success" startIcon={<FileSpreadsheet size={18} />} onClick={exportToExcel} size="small">Export Excel</Button>
               </Stack>
               <TableContainer component={Paper} sx={{ maxHeight: 400, boxShadow: 'none', border: '1px solid #e0e0e0', borderRadius: 2 }}>
                 <MuiTable stickyHeader>
@@ -207,15 +171,9 @@ const AdminDashboard = () => {
                           <Typography variant="body2" fontWeight={500}>{user.name} {user.surname}</Typography>
                           <Typography variant="caption" color="text.secondary">{user.email}</Typography>
                         </MuiTableCell>
-                        <MuiTableCell align="center">
-                          <Chip label={user.attendanceLog?.length || 0} size="small" />
-                        </MuiTableCell>
+                        <MuiTableCell align="center"><Chip label={user.attendanceLog?.length || 0} size="small" /></MuiTableCell>
                         <MuiTableCell align="right" sx={{ color: 'primary.main', fontWeight: 'bold' }}>{user.totalPoints}</MuiTableCell>
-                        <MuiTableCell align="center">
-                          <IconButton size="small" onClick={() => setSelectedUser(user)}>
-                            <Info size={18} />
-                          </IconButton>
-                        </MuiTableCell>
+                        <MuiTableCell align="center"><IconButton size="small" onClick={() => setSelectedUser(user)}><Info size={18} /></IconButton></MuiTableCell>
                       </MuiTableRow>
                     ))}
                   </TableBody>
@@ -227,9 +185,7 @@ const AdminDashboard = () => {
       </Grid>
 
       <Box sx={{ mt: 8, width: '100%' }}>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: 4 }}>
-          Active Events
-        </Typography>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: 4 }}>Active Events</Typography>
         <Grid container spacing={4} justifyContent="center">
           {events.map(event => (
             <Grid item xs={12} sm={6} md={4} key={event._id}>
@@ -238,22 +194,12 @@ const AdminDashboard = () => {
                   <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{event.title}</Typography>
                   <Typography variant="body2" color="text.secondary">Host: {event.host}</Typography>
                   <Typography variant="caption" display="block" sx={{ mb: 2 }}>{event.description}</Typography>
-                  
                   <Box sx={{ p: 2, bgcolor: 'white', border: '1px dashed #ccc', borderRadius: 2, display: 'inline-block' }}>
                     <QRCode id={`qr-${event._id}`} value={`${APP_URL}/attend/${event._id}`} size={150} />
                   </Box>
-                  
                   <Stack direction="row" justifyContent="center" gap={1} mt={2}>
-                    <Tooltip title="Download QR">
-                        <IconButton onClick={() => downloadQR(event._id, event.title)} color="primary">
-                          <Download size={20} />
-                        </IconButton>
-                     </Tooltip>
-                     <Tooltip title="Copy Link">
-                        <IconButton onClick={() => navigator.clipboard.writeText(`${APP_URL}/attend/${event._id}`)}>
-                          <Share2 size={20} />
-                        </IconButton>
-                     </Tooltip>
+                    <Tooltip title="Download QR"><IconButton onClick={() => downloadQR(event._id, event.title)} color="primary"><Download size={20} /></IconButton></Tooltip>
+                    <Tooltip title="Copy Link"><IconButton onClick={() => navigator.clipboard.writeText(`${APP_URL}/attend/${event._id}`)}><Share2 size={20} /></IconButton></Tooltip>
                   </Stack>
                 </CardContent>
               </Card>
@@ -262,11 +208,8 @@ const AdminDashboard = () => {
         </Grid>
       </Box>
 
-      {/* USER DETAILS DIALOG - Updated to show the new questionnaire answers */}
       <Dialog open={!!selectedUser} onClose={() => setSelectedUser(null)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <User /> Attendance History: {selectedUser?.name}
-        </DialogTitle>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}><User /> Attendance History: {selectedUser?.name}</DialogTitle>
         <DialogContent dividers>
           {selectedUser?.attendanceLog?.length > 0 ? (
             <Stack spacing={2}>
@@ -279,15 +222,12 @@ const AdminDashboard = () => {
                     </Box>
                     <Chip label={`+${log.pointsEarned} pts`} size="small" color="success" />
                   </Stack>
-                  
                   <Divider sx={{ my: 1 }} />
-                  
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}><b>Motivated by:</b> {log.motivation || 'N/A'}</Typography>
                   <Typography variant="caption" display="block"><b>Channel seen:</b> {log.commChannel || 'N/A'}</Typography>
                   <Typography variant="caption" display="block"><b>Fun activity:</b> {log.funActivity || 'N/A'}</Typography>
                   <Typography variant="caption" display="block"><b>Umuzi as a metaphor:</b> {log.umuziMetaphor || 'N/A'}</Typography>
                   <Typography variant="caption" display="block"><b>Looking forward to:</b> {log.lookingForward || 'N/A'}</Typography>
-
                   <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1.5, textAlign: 'right' }}>
                     Date: {new Date(log.dateScanned).toLocaleDateString()}
                   </Typography>
