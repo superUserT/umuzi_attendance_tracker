@@ -8,7 +8,6 @@ const User = require('./models/User');
 
 const app = express();
 
-
 app.use(cors());
 app.use(express.json());
 
@@ -39,7 +38,6 @@ app.post('/api/events', async (req, res) => {
   try {
     const { title, description, host, eventType, durationMinutes } = req.body;
 
-
     const pointsMap = { 'short_online': 5, 'long_online': 10, 'in_person': 15 };
     const points = pointsMap[eventType];
 
@@ -60,7 +58,6 @@ app.post('/api/events', async (req, res) => {
   }
 });
 
-
 app.get('/api/admin/data', async (req, res) => {
   try {
     const events = await Event.find().sort({ startTime: -1 });
@@ -72,7 +69,6 @@ app.get('/api/admin/data', async (req, res) => {
   }
 });
 
-
 app.get('/api/events/:id/validate', async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
@@ -82,7 +78,6 @@ app.get('/api/events/:id/validate', async (req, res) => {
       return res.status(400).json({ valid: false, message: "This QR Code has expired." });
     }
 
- 
     res.json({
       valid: true,
       eventTitle: event.title,
@@ -96,9 +91,12 @@ app.get('/api/events/:id/validate', async (req, res) => {
   }
 });
 
-
 app.post('/api/attend', async (req, res) => {
-  const { eventId, name, surname, email } = req.body;
+  // Added the 5 new fields to the destructuring
+  const { 
+    eventId, name, surname, email, 
+    motivation, commChannel, funActivity, umuziMetaphor, lookingForward 
+  } = req.body;
 
   try {
     const event = await Event.findById(eventId);
@@ -106,12 +104,10 @@ app.post('/api/attend', async (req, res) => {
       return res.status(400).json({ error: "Event expired or invalid" });
     }
 
-  
     let user = await User.findOne({ email });
     if (!user) {
       user = new User({ name, surname, email });
     }
-
 
     const alreadyAttended = user.attendanceLog.some(
       (log) => log.eventId.toString() === eventId
@@ -121,15 +117,19 @@ app.post('/api/attend', async (req, res) => {
       return res.status(400).json({ error: "You have already scanned in for this event." });
     }
 
-
+    // Push the 5 new fields into the attendance log
     user.attendanceLog.push({
       eventId: event._id,
       eventTitle: event.title,
       eventHost: event.host,
       dateScanned: new Date(),
-      pointsEarned: event.points
+      pointsEarned: event.points,
+      motivation,
+      commChannel,
+      funActivity,
+      umuziMetaphor,
+      lookingForward
     });
-
 
     user.totalPoints += event.points;
     user.name = name;
@@ -147,7 +147,6 @@ app.post('/api/attend', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

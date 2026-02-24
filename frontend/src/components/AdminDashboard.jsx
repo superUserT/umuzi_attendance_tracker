@@ -7,10 +7,10 @@ import {
   Typography, Select, MenuItem, FormControl, InputLabel, 
   Table as MuiTable, TableBody, TableCell as MuiTableCell, 
   TableContainer, TableHead, TableRow as MuiTableRow, 
-  Paper, Chip, Stack, IconButton, Tooltip, Dialog, DialogTitle, DialogContent
+  Paper, Chip, Stack, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, Divider
 } from '@mui/material';
 import { 
-  Calendar, Users, Trophy, Clock, Plus, Download, 
+  Calendar, Users, Trophy, Plus, Download, 
   FileSpreadsheet, Share2, Info, User
 } from 'lucide-react';
 
@@ -22,10 +22,7 @@ const AdminDashboard = () => {
   });
   const [selectedUser, setSelectedUser] = useState(null);
 
-
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  
-
   const APP_URL = window.location.origin;
 
   const fetchData = async () => {
@@ -64,7 +61,13 @@ const AdminDashboard = () => {
             "Event Attended": log.eventTitle,
             "Event Host": log.eventHost,
             "Points Gained": log.pointsEarned,
-            "Date Scanned": new Date(log.dateScanned).toLocaleString()
+            "Date Scanned": new Date(log.dateScanned).toLocaleString(),
+            // Added new fields to the Excel export
+            "Motivation": log.motivation || "N/A",
+            "Comms Channel": log.commChannel || "N/A",
+            "Fun Activity": log.funActivity || "N/A",
+            "Umuzi Metaphor": log.umuziMetaphor || "N/A",
+            "Looking Forward To": log.lookingForward || "N/A"
           });
         });
       } else {
@@ -76,7 +79,12 @@ const AdminDashboard = () => {
           "Event Attended": "N/A",
           "Event Host": "N/A",
           "Points Gained": 0,
-          "Date Scanned": "N/A"
+          "Date Scanned": "N/A",
+          "Motivation": "N/A",
+          "Comms Channel": "N/A",
+          "Fun Activity": "N/A",
+          "Umuzi Metaphor": "N/A",
+          "Looking Forward To": "N/A"
         });
       }
     });
@@ -117,7 +125,6 @@ const AdminDashboard = () => {
 
       <Grid container spacing={4} justifyContent="center">
         
-       
         <Grid item xs={12} md={5}>
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
             <CardContent>
@@ -165,7 +172,6 @@ const AdminDashboard = () => {
           </Card>
         </Grid>
 
-       
         <Grid item xs={12} md={7}>
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
             <CardContent>
@@ -220,7 +226,6 @@ const AdminDashboard = () => {
         </Grid>
       </Grid>
 
-     
       <Box sx={{ mt: 8, width: '100%' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: 4 }}>
           Active Events
@@ -234,7 +239,6 @@ const AdminDashboard = () => {
                   <Typography variant="body2" color="text.secondary">Host: {event.host}</Typography>
                   <Typography variant="caption" display="block" sx={{ mb: 2 }}>{event.description}</Typography>
                   
-                 
                   <Box sx={{ p: 2, bgcolor: 'white', border: '1px dashed #ccc', borderRadius: 2, display: 'inline-block' }}>
                     <QRCode id={`qr-${event._id}`} value={`${APP_URL}/attend/${event._id}`} size={150} />
                   </Box>
@@ -258,7 +262,7 @@ const AdminDashboard = () => {
         </Grid>
       </Box>
 
-    
+      {/* USER DETAILS DIALOG - Updated to show the new questionnaire answers */}
       <Dialog open={!!selectedUser} onClose={() => setSelectedUser(null)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <User /> Attendance History: {selectedUser?.name}
@@ -267,13 +271,26 @@ const AdminDashboard = () => {
           {selectedUser?.attendanceLog?.length > 0 ? (
             <Stack spacing={2}>
               {selectedUser.attendanceLog.map((log, index) => (
-                <Box key={index} sx={{ p: 2, border: '1px solid #eee', borderRadius: 2 }}>
-                  <Typography variant="subtitle2" fontWeight="bold">{log.eventTitle}</Typography>
-                  <Typography variant="body2" color="text.secondary">Host: {log.eventHost}</Typography>
-                  <Stack direction="row" justifyContent="space-between" mt={1}>
-                    <Typography variant="caption">Date: {new Date(log.dateScanned).toLocaleDateString()}</Typography>
+                <Box key={index} sx={{ p: 2, border: '1px solid #eee', borderRadius: 2, bgcolor: '#fdfdfd' }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight="bold">{log.eventTitle}</Typography>
+                      <Typography variant="body2" color="text.secondary">Host: {log.eventHost}</Typography>
+                    </Box>
                     <Chip label={`+${log.pointsEarned} pts`} size="small" color="success" />
                   </Stack>
+                  
+                  <Divider sx={{ my: 1 }} />
+                  
+                  <Typography variant="caption" display="block" sx={{ mt: 1 }}><b>Motivated by:</b> {log.motivation || 'N/A'}</Typography>
+                  <Typography variant="caption" display="block"><b>Channel seen:</b> {log.commChannel || 'N/A'}</Typography>
+                  <Typography variant="caption" display="block"><b>Fun activity:</b> {log.funActivity || 'N/A'}</Typography>
+                  <Typography variant="caption" display="block"><b>Umuzi as a metaphor:</b> {log.umuziMetaphor || 'N/A'}</Typography>
+                  <Typography variant="caption" display="block"><b>Looking forward to:</b> {log.lookingForward || 'N/A'}</Typography>
+
+                  <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1.5, textAlign: 'right' }}>
+                    Date: {new Date(log.dateScanned).toLocaleDateString()}
+                  </Typography>
                 </Box>
               ))}
             </Stack>

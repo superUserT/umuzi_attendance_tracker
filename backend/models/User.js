@@ -5,13 +5,18 @@ const UserSchema = new mongoose.Schema({
   surname: String,
   email: { type: String, required: true, unique: true },
   totalPoints: { type: Number, default: 0 },
-  // Updated to store detailed log
   attendanceLog: [{
     eventId: { type: mongoose.Schema.Types.ObjectId, ref: 'Event' },
     eventTitle: String,
     eventHost: String,
     dateScanned: { type: Date, default: Date.now },
-    pointsEarned: Number
+    pointsEarned: Number,
+    // 5 New Fields Added Below
+    motivation: String,
+    commChannel: String,
+    funActivity: String,
+    umuziMetaphor: String,
+    lookingForward: String
   }]
 });
 

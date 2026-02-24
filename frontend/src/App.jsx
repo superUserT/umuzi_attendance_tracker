@@ -9,7 +9,6 @@ function App() {
       <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
         <Routes>
           <Route path="/" element={<AdminDashboard />} />
-          {/* This route is where the QR code points to */}
           <Route path="/attend/:eventId" element={<AttendanceForm />} />
         </Routes>
       </div>

@@ -11,10 +11,14 @@ const AttendanceForm = () => {
   const { eventId } = useParams();
   const [status, setStatus] = useState('loading'); 
   const [eventDetails, setEventDetails] = useState(null);
-  const [formData, setFormData] = useState({ name: '', surname: '', email: '' });
+  
+  // Added the 5 new fields to the initial state
+  const [formData, setFormData] = useState({ 
+    name: '', surname: '', email: '',
+    motivation: '', commChannel: '', funActivity: '', umuziMetaphor: '', lookingForward: ''
+  });
   const [errorMsg, setErrorMsg] = useState('');
 
- 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
@@ -67,7 +71,7 @@ const AttendanceForm = () => {
   );
 
   return (
-    <Container maxWidth="sm" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Container maxWidth="sm" sx={{ py: 4, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Card elevation={4} sx={{ width: '100%', borderRadius: 3 }}>
         <CardContent sx={{ p: 4 }}>
           <Stack alignItems="center" mb={3}>
@@ -85,22 +89,55 @@ const AttendanceForm = () => {
 
           {errorMsg && <Alert severity="error" sx={{ mb: 2 }}>{errorMsg}</Alert>}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            
+            {/* Standard Fields */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField label="First Name" variant="outlined" fullWidth required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+              <TextField label="Surname" variant="outlined" fullWidth required value={formData.surname} onChange={e => setFormData({...formData, surname: e.target.value})} />
+              <TextField label="Email Address" type="email" variant="outlined" fullWidth required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+            </Box>
+
+            {/* 5 New Custom Questions */}
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: 1, borderBottom: '1px solid #eee', pb: 1 }}>
+              Quick Questionnaire
+            </Typography>
+
             <TextField 
-              label="First Name" variant="outlined" fullWidth required
-              value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
+              label="1. What motivated you to attend today's session?" 
+              variant="outlined" fullWidth required multiline rows={2}
+              value={formData.motivation}
+              onChange={e => setFormData({...formData, motivation: e.target.value})}
             />
+            
             <TextField 
-              label="Surname" variant="outlined" fullWidth required
-              value={formData.surname}
-              onChange={e => setFormData({...formData, surname: e.target.value})}
+              label="2. Which channel did you see the comms about today?" 
+              variant="outlined" fullWidth required
+              value={formData.commChannel}
+              onChange={e => setFormData({...formData, commChannel: e.target.value})}
             />
+            
             <TextField 
-              label="Email Address" type="email" variant="outlined" fullWidth required
-              value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
+              label="3. What do you typically do for fun?" 
+              variant="outlined" fullWidth required multiline rows={2}
+              value={formData.funActivity}
+              onChange={e => setFormData({...formData, funActivity: e.target.value})}
             />
+            
+            <TextField 
+              label="4. If Umuzi was a (food/colour/mood/car), what would it be?" 
+              variant="outlined" fullWidth required
+              value={formData.umuziMetaphor}
+              onChange={e => setFormData({...formData, umuziMetaphor: e.target.value})}
+            />
+            
+            <TextField 
+              label="5. What are you most looking forward to this year?" 
+              variant="outlined" fullWidth required multiline rows={2}
+              value={formData.lookingForward}
+              onChange={e => setFormData({...formData, lookingForward: e.target.value})}
+            />
+
             <Button 
               variant="contained" size="large" type="submit" 
               sx={{ mt: 2, py: 1.5, fontSize: '1.1rem', fontWeight: 'bold' }}
