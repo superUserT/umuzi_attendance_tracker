@@ -26,7 +26,6 @@ const AdminDashboard = () => {
     try {
       const res = await axios.get(`${API_URL}/api/admin/data`);
       
-      // SAFETY CHECKS: Prevents the "map is undefined" crash
       if (res.data && Array.isArray(res.data.events)) {
         setEvents(res.data.events);
       } else {
@@ -64,19 +63,9 @@ const AdminDashboard = () => {
       if (user.attendanceLog && user.attendanceLog.length > 0) {
         user.attendanceLog.forEach(log => {
           data.push({
-            "First Name": user.name,
-            "Surname": user.surname,
-            "Email": user.email,
-            "Total Points": user.totalPoints,
-            "Event Attended": log.eventTitle,
-            "Event Host": log.eventHost,
-            "Points Gained": log.pointsEarned,
-            "Date Scanned": new Date(log.dateScanned).toLocaleString(),
-            "Motivation": log.motivation || "N/A",
-            "Comms Channel": log.commChannel || "N/A",
-            "Fun Activity": log.funActivity || "N/A",
-            "Umuzi Metaphor": log.umuziMetaphor || "N/A",
-            "Looking Forward To": log.lookingForward || "N/A"
+            "First Name": user.name, "Surname": user.surname, "Email": user.email, "Total Points": user.totalPoints,
+            "Event Attended": log.eventTitle, "Event Host": log.eventHost, "Points Gained": log.pointsEarned, "Date Scanned": new Date(log.dateScanned).toLocaleString(),
+            "Motivation": log.motivation || "N/A", "Comms Channel": log.commChannel || "N/A", "Fun Activity": log.funActivity || "N/A", "Umuzi Metaphor": log.umuziMetaphor || "N/A", "Looking Forward To": log.lookingForward || "N/A"
           });
         });
       } else {
@@ -112,17 +101,17 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 6, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Box sx={{ textAlign: 'center', mb: 6 }}>
-        <Typography variant="h3" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, px: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
+        <Typography sx={{ typography: { xs: 'h4', md: 'h3' }, fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
           <Trophy color="#f59e0b" size={40} /> Gamified Attendance
         </Typography>
       </Box>
 
-      <Grid container spacing={4} justifyContent="center">
+      <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
         <Grid item xs={12} md={5}>
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
-            <CardContent>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}>
                 <Calendar className="text-blue-600" /> Create Event
               </Typography>
@@ -147,20 +136,20 @@ const AdminDashboard = () => {
 
         <Grid item xs={12} md={7}>
           <Card elevation={4} sx={{ borderRadius: 3, height: '100%' }}>
-            <CardContent>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+            <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={2}>
                 <Typography variant="h5" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 600 }}><Users className="text-green-600" /> Leaderboard</Typography>
                 <Button variant="outlined" color="success" startIcon={<FileSpreadsheet size={18} />} onClick={exportToExcel} size="small">Export Excel</Button>
               </Stack>
               <TableContainer component={Paper} sx={{ maxHeight: 400, boxShadow: 'none', border: '1px solid #e0e0e0', borderRadius: 2 }}>
-                <MuiTable stickyHeader>
+                <MuiTable stickyHeader size="small">
                   <TableHead>
                     <MuiTableRow>
                       <MuiTableCell sx={{ fontWeight: 'bold' }}>Rank</MuiTableCell>
                       <MuiTableCell sx={{ fontWeight: 'bold' }}>User</MuiTableCell>
                       <MuiTableCell align="center" sx={{ fontWeight: 'bold' }}>Events</MuiTableCell>
-                      <MuiTableCell align="right" sx={{ fontWeight: 'bold' }}>Points</MuiTableCell>
-                      <MuiTableCell align="center">Details</MuiTableCell>
+                      <MuiTableCell align="right" sx={{ fontWeight: 'bold' }}>Pts</MuiTableCell>
+                      <MuiTableCell align="center">Info</MuiTableCell>
                     </MuiTableRow>
                   </TableHead>
                   <TableBody>
@@ -169,7 +158,6 @@ const AdminDashboard = () => {
                         <MuiTableCell sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>#{idx + 1}</MuiTableCell>
                         <MuiTableCell>
                           <Typography variant="body2" fontWeight={500}>{user.name} {user.surname}</Typography>
-                          <Typography variant="caption" color="text.secondary">{user.email}</Typography>
                         </MuiTableCell>
                         <MuiTableCell align="center"><Chip label={user.attendanceLog?.length || 0} size="small" /></MuiTableCell>
                         <MuiTableCell align="right" sx={{ color: 'primary.main', fontWeight: 'bold' }}>{user.totalPoints}</MuiTableCell>
@@ -184,9 +172,9 @@ const AdminDashboard = () => {
         </Grid>
       </Grid>
 
-      <Box sx={{ mt: 8, width: '100%' }}>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: 4 }}>Active Events</Typography>
-        <Grid container spacing={4} justifyContent="center">
+      <Box sx={{ mt: { xs: 6, md: 8 }, width: '100%' }}>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: { xs: 3, md: 4 } }}>Active Events</Typography>
+        <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} justifyContent="center">
           {events.map(event => (
             <Grid item xs={12} sm={6} md={4} key={event._id}>
               <Card elevation={3} sx={{ borderRadius: 3, textAlign: 'center', p: 1 }}>
@@ -208,13 +196,13 @@ const AdminDashboard = () => {
         </Grid>
       </Box>
 
-      <Dialog open={!!selectedUser} onClose={() => setSelectedUser(null)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}><User /> Attendance History: {selectedUser?.name}</DialogTitle>
-        <DialogContent dividers>
+      <Dialog open={!!selectedUser} onClose={() => setSelectedUser(null)} fullWidth maxWidth="sm" sx={{ '& .MuiDialog-paper': { m: 2 } }}>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2, typography: { xs: 'h6', sm: 'h5' } }}><User /> History: {selectedUser?.name}</DialogTitle>
+        <DialogContent dividers sx={{ p: { xs: 1.5, sm: 3 } }}>
           {selectedUser?.attendanceLog?.length > 0 ? (
             <Stack spacing={2}>
               {selectedUser.attendanceLog.map((log, index) => (
-                <Box key={index} sx={{ p: 2, border: '1px solid #eee', borderRadius: 2, bgcolor: '#fdfdfd' }}>
+                <Box key={index} sx={{ p: { xs: 1.5, sm: 2 }, border: '1px solid #eee', borderRadius: 2, bgcolor: '#fdfdfd' }}>
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1}>
                     <Box>
                       <Typography variant="subtitle1" fontWeight="bold">{log.eventTitle}</Typography>

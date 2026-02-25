@@ -34,6 +34,7 @@ mongoose.connect(process.env.MONGO_URL)
   .catch(err => console.log('MongoDB Connection Error:', err));
 
 
+
 app.post('/api/events', async (req, res) => {
   try {
     const { title, description, host, eventType, durationMinutes } = req.body;
@@ -147,6 +148,49 @@ app.post('/api/attend', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+const isAdmin = (req, res, next) => {
+  const allowedEmails = [
+    "rantshothabisomail@gmail.com",
+    "alanwattscodes@gmail.com",
+  ];
+  const userEmail =
+    req.session.email || req.session.user?.email || req.user?.email;
+
+  if (
+    req.session.user &&
+    userEmail &&
+    allowedEmails.includes(userEmail.toLowerCase())
+  ) {
+    next();
+  } else {
+    res.status(403).send(errorMessages.notAdmin);
+  }
+};
+
+const isAuthenticated = (req, res, next) => {
+  if (req.session.user) {
+    next();
+  } else {
+    res.redirect("/login");
+  }
+};
+
+app.post('/api/admin/login', async (req, res) => {
+  const { email, password } = req.body;
+  const allowedAdminEmails = [process.env.ADMIN_EMAIL_1, process.env.ADMIN_EMAIL_2, process.env.ADMIN_EMAIL_3].filter(Boolean);
+  try {
+    if (allowedAdminEmails.includes(email) && password === process.env.ADMIN_PASSWORD) {
+      return res.json({ success: true });
+    } else {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+  } catch (err) {
+    console.error("Error during admin login:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
