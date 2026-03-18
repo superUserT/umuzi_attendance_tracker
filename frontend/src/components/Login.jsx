@@ -3,19 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import LoginForm from './LoginForm';
 
-export default function AdminLogin() {
+const Login = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSuccess = () => {
-    navigate('/admin/dashboard');
+    navigate('/admin');
   };
 
   return (
     <LoginForm
-      title="Admin Login"
+      title="Login"
       onLogin={login}
       onSuccess={handleSuccess}
     />
   );
-}
+};
+
+export default Login;

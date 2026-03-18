@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import QRCode from 'react-qr-code';
 import * as XLSX from 'xlsx';
@@ -10,6 +10,7 @@ import {
   Paper, Chip, Stack, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, Divider
 } from '@mui/material';
 import { Calendar, Users, Trophy, Plus, Download, FileSpreadsheet, Share2, Info, User } from 'lucide-react';
+import { AuthContext } from '../context/AuthContext';
 
 const AdminDashboard = () => {
   const [events, setEvents] = useState([]);
@@ -18,13 +19,18 @@ const AdminDashboard = () => {
     title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60
   });
   const [selectedUser, setSelectedUser] = useState(null);
+  const { user } = useContext(AuthContext);
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const APP_URL = window.location.origin;
 
   const fetchData = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/admin/data`);
+      const res = await axios.get(`${API_URL}/api/admin/data`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
       
       if (res.data && Array.isArray(res.data.events)) {
         setEvents(res.data.events);
@@ -44,12 +50,20 @@ const AdminDashboard = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    if(user) {
+      fetchData(); 
+    }
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/api/events`, formData);
+      await axios.post(`${API_URL}/api/events`, formData, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
       fetchData(); 
       setFormData({ title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60 });
     } catch (err) {
