@@ -3,9 +3,11 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const Event = require("./models/Event");
 const User = require("./models/User");
+const Admin = require("./models/Admin");
 
 const app = express();
 
@@ -30,9 +32,46 @@ app.use(
 
 app.use(express.json());
 
+const initializeAdmin = async () => {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+      console.warn("ADMIN_EMAIL or ADMIN_PASSWORD not set in .env");
+      return;
+    }
+
+    const existingAdmin = await Admin.findOne({ email: adminEmail });
+    if (existingAdmin) {
+      console.log("Admin already exists");
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
+
+    const newAdmin = new Admin({
+      name: "Admin",
+      surname: "User",
+      email: adminEmail,
+      password: hashedPassword,
+      role: "admin"
+    });
+
+    await newAdmin.save();
+    console.log("Admin user initialized successfully");
+  } catch (err) {
+    console.error("Error initializing admin:", err);
+  }
+};
+
 mongoose
   .connect(process.env.MONGO_URL)
-  .then(() => console.log("MongoDB Connected"))
+  .then(async () => {
+    console.log("MongoDB Connected");
+    await initializeAdmin();
+  })
   .catch((err) => console.log("MongoDB Connection Error:", err));
 
 const protectAdmin = (req, res, next) => {
