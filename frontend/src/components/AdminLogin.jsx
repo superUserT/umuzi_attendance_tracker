@@ -8,7 +8,7 @@ export default function AdminLogin() {
   const navigate = useNavigate();
 
   const handleSuccess = () => {
-    navigate('/admin/dashboard');
+    navigate('/admin');
   };
 
   return (

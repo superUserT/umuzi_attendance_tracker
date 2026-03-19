@@ -2,16 +2,16 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 const Event = require("./models/Event");
 const User = require("./models/User");
 const Admin = require("./models/Admin");
+const { loginUser, registerUser, protect, admin } = require("./auth");
+const logger = require("./config/logger");
 
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
@@ -30,15 +30,13 @@ app.use(
   }),
 );
 
-app.use(express.json());
-
 const initializeAdmin = async () => {
   try {
     const adminEmail = process.env.ADMIN_EMAIL;
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminEmail || !adminPassword) {
-      console.warn("ADMIN_EMAIL or ADMIN_PASSWORD not set in .env");
+      logger.warn("ADMIN_EMAIL or ADMIN_PASSWORD not set in .env");
       return;
     }
 
@@ -62,7 +60,7 @@ const initializeAdmin = async () => {
     await newAdmin.save();
     console.log("Admin user initialized successfully");
   } catch (err) {
-    console.error("Error initializing admin:", err);
+    logger.error("Error initializing admin:", err);
   }
 };
 
@@ -72,35 +70,9 @@ mongoose
     console.log("MongoDB Connected");
     await initializeAdmin();
   })
-  .catch((err) => console.log("MongoDB Connection Error:", err));
+  .catch((err) => logger.error("MongoDB Connection Error:", err));
 
-const protectAdmin = (req, res, next) => {
-  let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      if (decoded.role === "admin") {
-        req.user = decoded;
-        next();
-      } else {
-        res.status(403).json({ error: "Not authorized, not an admin" });
-      }
-    } catch (error) {
-      res.status(401).json({ error: "Not authorized, token failed" });
-    }
-  }
-
-  if (!token) {
-    res.status(401).json({ error: "Not authorized, no token" });
-  }
-};
-
-app.post("/api/events", protectAdmin, async (req, res) => {
+app.post("/api/events", protect, admin, async (req, res) => {
   try {
     const { title, description, host, eventType, durationMinutes } = req.body;
 
@@ -119,18 +91,18 @@ app.post("/api/events", protectAdmin, async (req, res) => {
     await newEvent.save();
     res.json(newEvent);
   } catch (err) {
-    console.error("Error creating event:", err);
+    logger.error("Error creating event:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get("/api/admin/data", protectAdmin, async (req, res) => {
+app.get("/api/admin/data", protect, admin, async (req, res) => {
   try {
     const events = await Event.find().sort({ startTime: -1 });
     const users = await User.find().sort({ totalPoints: -1 });
     res.json({ events, users });
   } catch (err) {
-    console.error("Error fetching admin data:", err);
+    logger.error("Error fetching admin data:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -155,7 +127,7 @@ app.get("/api/events/:id/validate", async (req, res) => {
       points: event.points,
     });
   } catch (err) {
-    console.error("Error validating event:", err);
+    logger.error("Error validating event:", err);
     res.status(500).json({ valid: false });
   }
 });
@@ -221,39 +193,14 @@ app.post("/api/attend", async (req, res) => {
       totalPoints: user.totalPoints,
     });
   } catch (err) {
-    console.error("Error submitting attendance:", err);
+    logger.error("Error submitting attendance:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post("/api/admin/login", async (req, res) => {
-  const { email, password } = req.body;
-  const allowedAdminEmails = [
-    process.env.ADMIN_EMAIL_1,
-    process.env.ADMIN_EMAIL_2,
-    process.env.ADMIN_EMAIL_3,
-  ].filter(Boolean);
-  try {
-    if (
-      allowedAdminEmails.includes(email.toLowerCase()) &&
-      password === process.env.ADMIN_PASSWORD
-    ) {
-      // In a real app, you should hash and compare passwords.
-      const token = jwt.sign(
-        { email: email, role: "admin" },
-        process.env.JWT_SECRET,
-        { expiresIn: "8h" },
-      );
+app.post("/api/login", loginUser);
 
-      return res.json({ success: true, token });
-    } else {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-  } catch (err) {
-    console.error("Error during admin login:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+app.post("/api/register", registerUser);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

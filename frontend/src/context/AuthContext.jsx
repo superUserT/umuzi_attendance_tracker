@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    const res = await fetch(`${API_URL}/api/admin/login`, {
+    const res = await fetch(`${API_URL}/api/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -39,13 +39,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (name, surname, email, password) => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const res = await fetch(`${API_URL}/api/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, surname, email, password }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to register');
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
