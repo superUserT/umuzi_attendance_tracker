@@ -33,18 +33,18 @@ mongoose.connect(process.env.MONGO_URL)
 
 app.post('/api/events', async (req, res) => {
   try {
-    const { title, description, host, eventType, durationMinutes, questions } = req.body;
+    const { title, description, host, eventType, points, questions } = req.body;
 
-    const pointsMap = { 'short_online': 5, 'long_online': 10, 'in_person': 15 };
-    const points = pointsMap[eventType];
+   
+    const DURATION_7_DAYS = 10080; 
 
     const newEvent = new Event({
       title,
       description,
       host,
       eventType,
-      points,
-      durationMinutes,
+      points: points || 0,
+      durationMinutes: DURATION_7_DAYS,
       questions: questions || []
     });
 
@@ -155,3 +155,5 @@ app.post('/api/admin/login', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+module.exports = app;

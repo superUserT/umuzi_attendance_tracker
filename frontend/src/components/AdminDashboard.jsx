@@ -15,7 +15,7 @@ const AdminDashboard = () => {
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
-    title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60, questions: ['']
+    title: '', description: '', host: '', eventType: 'in_person', points: 10, questions: ['']
   });
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -63,7 +63,7 @@ const AdminDashboard = () => {
     try {
       await axios.post(`${API_URL}/api/events`, formData);
       fetchData(); 
-      setFormData({ title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60, questions: [''] });
+      setFormData({ title: '', description: '', host: '', eventType: 'in_person', points: 10, questions: [''] });
     } catch (err) {
       alert("Error creating event");
     }
@@ -119,9 +119,17 @@ const AdminDashboard = () => {
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, px: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
-        <Typography sx={{ typography: { xs: 'h4', md: 'h3' }, fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-          <Trophy color="#f59e0b" size={40} /> Gamified Attendance
-        </Typography>
+        <Typography sx={{ 
+      color: 'white', 
+      typography: { xs: 'h4', md: 'h3' }, 
+      fontWeight: 'bold', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      gap: 2 
+    }}>
+      <Trophy color="#f59e0b" size={40} /> Gamified Attendance
+    </Typography>
       </Box>
 
       <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
@@ -138,12 +146,22 @@ const AdminDashboard = () => {
                 <FormControl fullWidth>
                   <InputLabel>Event Type</InputLabel>
                   <Select value={formData.eventType} label="Event Type" onChange={e => setFormData({...formData, eventType: e.target.value})}>
-                    <MenuItem value="short_online">Short Online (5 pts)</MenuItem>
-                    <MenuItem value="long_online">Long Online (10 pts)</MenuItem>
-                    <MenuItem value="in_person">In Person (15 pts)</MenuItem>
+                    <MenuItem value="short_online">Short Online</MenuItem>
+                    <MenuItem value="long_online">Long Online</MenuItem>
+                    <MenuItem value="in_person">In Person</MenuItem>
                   </Select>
                 </FormControl>
-                <TextField label="Duration (Minutes)" type="number" variant="outlined" fullWidth required value={formData.durationMinutes} onChange={e => setFormData({...formData, durationMinutes: e.target.value})} />
+                
+                {/* Replaced Duration with Points */}
+                <TextField 
+                  label="Points for Attending" 
+                  type="number" 
+                  variant="outlined" 
+                  fullWidth 
+                  required 
+                  value={formData.points} 
+                  onChange={e => setFormData({...formData, points: Number(e.target.value)})} 
+                />
                 
                 <Box sx={{ mt: 2, borderTop: '1px solid #eee', pt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold">Custom Questions</Typography>
@@ -206,7 +224,18 @@ const AdminDashboard = () => {
       </Grid>
 
       <Box sx={{ mt: { xs: 6, md: 8 }, width: '100%' }}>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: { xs: 3, md: 4 } }}>Active Events</Typography>
+        <Typography 
+  variant="h5" 
+  gutterBottom 
+  sx={{ 
+    color: 'white', 
+    fontWeight: 600, 
+    textAlign: 'center', 
+    mb: { xs: 3, md: 4 } 
+  }}
+>
+  Active Events
+</Typography>
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} justifyContent="center">
           {events.map(event => (
             <Grid item xs={12} sm={6} md={4} key={event._id}>

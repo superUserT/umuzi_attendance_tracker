@@ -11,7 +11,6 @@ const UserSchema = new mongoose.Schema({
     eventHost: String,
     dateScanned: { type: Date, default: Date.now },
     pointsEarned: Number,
-    // Replace hardcoded fields with a dynamic answers array
     answers: [{
       question: String,
       answer: String
