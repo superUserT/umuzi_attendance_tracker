@@ -27,17 +27,13 @@ app.use(cors({
   }
 }));
 
-app.use(express.json());
-
 mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log('MongoDB Connection Error:', err));
 
-
-
 app.post('/api/events', async (req, res) => {
   try {
-    const { title, description, host, eventType, durationMinutes } = req.body;
+    const { title, description, host, eventType, durationMinutes, questions } = req.body;
 
     const pointsMap = { 'short_online': 5, 'long_online': 10, 'in_person': 15 };
     const points = pointsMap[eventType];
@@ -48,7 +44,8 @@ app.post('/api/events', async (req, res) => {
       host,
       eventType,
       points,
-      durationMinutes
+      durationMinutes,
+      questions: questions || []
     });
 
     await newEvent.save();
@@ -84,7 +81,8 @@ app.get('/api/events/:id/validate', async (req, res) => {
       eventTitle: event.title,
       host: event.host,
       description: event.description,
-      points: event.points
+      points: event.points,
+      questions: event.questions 
     });
   } catch (err) {
     console.error("Error validating event:", err);
@@ -93,11 +91,7 @@ app.get('/api/events/:id/validate', async (req, res) => {
 });
 
 app.post('/api/attend', async (req, res) => {
-  // Added the 5 new fields to the destructuring
-  const { 
-    eventId, name, surname, email, 
-    motivation, commChannel, funActivity, umuziMetaphor, lookingForward 
-  } = req.body;
+  const { eventId, name, surname, email, answers } = req.body;
 
   try {
     const event = await Event.findById(eventId);
@@ -118,18 +112,13 @@ app.post('/api/attend', async (req, res) => {
       return res.status(400).json({ error: "You have already scanned in for this event." });
     }
 
-    // Push the 5 new fields into the attendance log
     user.attendanceLog.push({
       eventId: event._id,
       eventTitle: event.title,
       eventHost: event.host,
       dateScanned: new Date(),
       pointsEarned: event.points,
-      motivation,
-      commChannel,
-      funActivity,
-      umuziMetaphor,
-      lookingForward
+      answers: answers || []
     });
 
     user.totalPoints += event.points;
@@ -149,33 +138,6 @@ app.post('/api/attend', async (req, res) => {
   }
 });
 
-const isAdmin = (req, res, next) => {
-  const allowedEmails = [
-    "rantshothabisomail@gmail.com",
-    "alanwattscodes@gmail.com",
-  ];
-  const userEmail =
-    req.session.email || req.session.user?.email || req.user?.email;
-
-  if (
-    req.session.user &&
-    userEmail &&
-    allowedEmails.includes(userEmail.toLowerCase())
-  ) {
-    next();
-  } else {
-    res.status(403).send(errorMessages.notAdmin);
-  }
-};
-
-const isAuthenticated = (req, res, next) => {
-  if (req.session.user) {
-    next();
-  } else {
-    res.redirect("/login");
-  }
-};
-
 app.post('/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
   const allowedAdminEmails = [process.env.ADMIN_EMAIL_1, process.env.ADMIN_EMAIL_2, process.env.ADMIN_EMAIL_3].filter(Boolean);
@@ -190,7 +152,6 @@ app.post('/api/admin/login', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -8,6 +8,8 @@ const EventSchema = new mongoose.Schema({
   points: { type: Number, required: true },
   durationMinutes: { type: Number, required: true },
   startTime: { type: Date, default: Date.now },
+  // Add this field to store custom questions
+  questions: [{ type: String }] 
 });
 
 EventSchema.methods.isLive = function() {
