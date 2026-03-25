@@ -1,42 +1,80 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-
-const Event = require('./models/Event');
-const User = require('./models/User');
-
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const bcrypt = require("bcryptjs");
+const Event = require("./models/Event");
+const User = require("./models/User");
+const Admin = require("./models/Admin");
+const { loginUser, protect, admin } = require("./auth");
+const logger = require("./config/logger");
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 
-const allowedOrigins = [
-  'http://localhost:5173', 
-  process.env.FRONTEND_URL
-];
+const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+  }),
+);
+
+const initializeAdmin = async () => {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+      logger.warn("ADMIN_EMAIL or ADMIN_PASSWORD not set in .env");
+      return;
     }
-    return callback(null, true);
+
+    const existingAdmin = await Admin.findOne({ email: adminEmail });
+    if (existingAdmin) {
+      console.log("Admin already exists");
+      return;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
+
+    const newAdmin = new Admin({
+      name: "Admin",
+      surname: "User",
+      email: adminEmail,
+      password: hashedPassword,
+      role: "admin"
+    });
+
+    await newAdmin.save();
+    console.log("Admin user initialized successfully");
+  } catch (err) {
+    logger.error("Error initializing admin:", err);
   }
-}));
+};
 
-mongoose.connect(process.env.MONGO_URL)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log('MongoDB Connection Error:', err));
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then(async () => {
+    console.log("MongoDB Connected");
+    await initializeAdmin();
+  })
+  .catch((err) => logger.error("MongoDB Connection Error:", err));
 
-app.post('/api/events', async (req, res) => {
+// --- PROTECTED ADMIN ROUTES ---
+app.post("/api/events", protect, admin, async (req, res) => {
   try {
     const { title, description, host, eventType, points, questions } = req.body;
-
-   
-    const DURATION_7_DAYS = 10080; 
+    const DURATION_7_DAYS = 10080;
 
     const newEvent = new Event({
       title,
@@ -51,29 +89,33 @@ app.post('/api/events', async (req, res) => {
     await newEvent.save();
     res.json(newEvent);
   } catch (err) {
-    console.error("Error creating event:", err);
+    logger.error("Error creating event:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/admin/data', async (req, res) => {
+app.get("/api/admin/data", protect, admin, async (req, res) => {
   try {
     const events = await Event.find().sort({ startTime: -1 });
     const users = await User.find().sort({ totalPoints: -1 });
     res.json({ events, users });
   } catch (err) {
-    console.error("Error fetching admin data:", err);
+    logger.error("Error fetching admin data:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get('/api/events/:id/validate', async (req, res) => {
+// --- PUBLIC ATTENDANCE ROUTES ---
+app.get("/api/events/:id/validate", async (req, res) => {
   try {
     const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ valid: false, message: "Event not found" });
+    if (!event)
+      return res.status(404).json({ valid: false, message: "Event not found" });
 
     if (!event.isLive()) {
-      return res.status(400).json({ valid: false, message: "This QR Code has expired." });
+      return res
+        .status(400)
+        .json({ valid: false, message: "This QR Code has expired." });
     }
 
     res.json({
@@ -82,15 +124,15 @@ app.get('/api/events/:id/validate', async (req, res) => {
       host: event.host,
       description: event.description,
       points: event.points,
-      questions: event.questions 
+      questions: event.questions
     });
   } catch (err) {
-    console.error("Error validating event:", err);
+    logger.error("Error validating event:", err);
     res.status(500).json({ valid: false });
   }
 });
 
-app.post('/api/attend', async (req, res) => {
+app.post("/api/attend", async (req, res) => {
   const { eventId, name, surname, email, answers } = req.body;
 
   try {
@@ -105,11 +147,13 @@ app.post('/api/attend', async (req, res) => {
     }
 
     const alreadyAttended = user.attendanceLog.some(
-      (log) => log.eventId.toString() === eventId
+      (log) => log.eventId.toString() === eventId,
     );
 
     if (alreadyAttended) {
-      return res.status(400).json({ error: "You have already scanned in for this event." });
+      return res
+        .status(400)
+        .json({ error: "You have already scanned in for this event." });
     }
 
     user.attendanceLog.push({
@@ -130,30 +174,17 @@ app.post('/api/attend', async (req, res) => {
     res.json({
       success: true,
       pointsAdded: event.points,
-      totalPoints: user.totalPoints
+      totalPoints: user.totalPoints,
     });
   } catch (err) {
-    console.error("Error submitting attendance:", err);
+    logger.error("Error submitting attendance:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.post('/api/admin/login', async (req, res) => {
-  const { email, password } = req.body;
-  const allowedAdminEmails = [process.env.ADMIN_EMAIL_1, process.env.ADMIN_EMAIL_2, process.env.ADMIN_EMAIL_3].filter(Boolean);
-  try {
-    if (allowedAdminEmails.includes(email) && password === process.env.ADMIN_PASSWORD) {
-      return res.json({ success: true });
-    } else {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
-  } catch (err) {
-    console.error("Error during admin login:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+
+app.post("/api/login", loginUser);
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-module.exports = app;
