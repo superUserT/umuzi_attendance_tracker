@@ -7,6 +7,8 @@ const bcrypt = require("bcryptjs");
 const Event = require("./models/Event");
 const User = require("./models/User");
 const Admin = require("./models/Admin");
+const FeedbackForm = require("./models/FeedbackForm");
+const FeedbackResponse = require("./models/FeedbackResponse");
 const { loginUser, registerUser, protect, admin } = require("./auth");
 const logger = require("./config/logger");
 
@@ -194,6 +196,71 @@ app.post("/api/attend", async (req, res) => {
     });
   } catch (err) {
     logger.error("Error submitting attendance:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- FEEDBACK FORM ROUTES ---
+
+// Create a new Feedback Form (Admin)
+app.post("/api/feedback", protect, admin, async (req, res) => {
+  try {
+    const { title, description, questions } = req.body;
+    const newForm = new FeedbackForm({ title, description, questions });
+    await newForm.save();
+    res.json(newForm);
+  } catch (err) {
+    logger.error("Error creating feedback form:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all Feedback Forms (Admin Dashboard)
+app.get("/api/admin/feedback", protect, admin, async (req, res) => {
+  try {
+    const forms = await FeedbackForm.find().sort({ createdAt: -1 });
+    res.json(forms);
+  } catch (err) {
+    logger.error("Error fetching feedback forms:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get single Feedback Form for Users (Public - Via QR scan)
+app.get("/api/feedback/:id/validate", async (req, res) => {
+  try {
+    const form = await FeedbackForm.findById(req.params.id);
+    if (!form) return res.status(404).json({ valid: false, message: "Feedback form not found" });
+    res.json({ valid: true, form });
+  } catch (err) {
+    logger.error("Error validating feedback form:", err);
+    res.status(500).json({ valid: false });
+  }
+});
+
+// Submit Feedback Response (Public)
+app.post("/api/feedback/:id/respond", async (req, res) => {
+  try {
+    const { name, surname, email, answers } = req.body;
+    const formId = req.params.id;
+
+    const newResponse = new FeedbackResponse({ formId, user: { name, surname, email }, answers });
+    await newResponse.save();
+    
+    res.json({ success: true });
+  } catch (err) {
+    logger.error("Error submitting feedback:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get responses for a specific form (Admin - Leaderboard/Export)
+app.get("/api/admin/feedback/:id/responses", protect, admin, async (req, res) => {
+  try {
+    const responses = await FeedbackResponse.find({ formId: req.params.id }).sort({ submittedAt: -1 });
+    res.json(responses);
+  } catch (err) {
+    logger.error("Error fetching responses:", err);
     res.status(500).json({ error: err.message });
   }
 });

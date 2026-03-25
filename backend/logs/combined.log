@@ -13,3 +13,5 @@
 {"level":"info","message":"MongoDB Connected","timestamp":"2026-03-18T19:42:52.832Z"}
 {"level":"info","message":"MongoDB Connected","timestamp":"2026-03-18T19:42:52.933Z"}
 {"level":"info","message":"Root endpoint accessed","timestamp":"2026-03-18T19:42:59.035Z"}
+{"level":"error","message":"Token verification failed: %o","timestamp":"2026-03-19T17:46:53.257Z"}
+{"level":"error","message":"Token verification failed: %o","timestamp":"2026-03-19T17:46:53.269Z"}
