@@ -15,7 +15,7 @@ const AdminDashboard = () => {
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
-    title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60, questions: ['']
+    title: '', description: '', host: '', eventType: 'in_person', points: 10, questions: ['']
   });
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -63,7 +63,7 @@ const AdminDashboard = () => {
     try {
       await axios.post(`${API_URL}/api/events`, formData);
       fetchData(); 
-      setFormData({ title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60, questions: [''] });
+      setFormData({ title: '', description: '', host: '', eventType: 'in_person', points: 10, questions: [''] });
     } catch (err) {
       alert("Error creating event");
     }
@@ -138,12 +138,22 @@ const AdminDashboard = () => {
                 <FormControl fullWidth>
                   <InputLabel>Event Type</InputLabel>
                   <Select value={formData.eventType} label="Event Type" onChange={e => setFormData({...formData, eventType: e.target.value})}>
-                    <MenuItem value="short_online">Short Online (5 pts)</MenuItem>
-                    <MenuItem value="long_online">Long Online (10 pts)</MenuItem>
-                    <MenuItem value="in_person">In Person (15 pts)</MenuItem>
+                    <MenuItem value="short_online">Short Online</MenuItem>
+                    <MenuItem value="long_online">Long Online</MenuItem>
+                    <MenuItem value="in_person">In Person</MenuItem>
                   </Select>
                 </FormControl>
-                <TextField label="Duration (Minutes)" type="number" variant="outlined" fullWidth required value={formData.durationMinutes} onChange={e => setFormData({...formData, durationMinutes: e.target.value})} />
+                
+                {/* Replaced Duration with Points */}
+                <TextField 
+                  label="Points for Attending" 
+                  type="number" 
+                  variant="outlined" 
+                  fullWidth 
+                  required 
+                  value={formData.points} 
+                  onChange={e => setFormData({...formData, points: Number(e.target.value)})} 
+                />
                 
                 <Box sx={{ mt: 2, borderTop: '1px solid #eee', pt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold">Custom Questions</Typography>

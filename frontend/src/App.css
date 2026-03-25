@@ -40,3 +40,23 @@
 .read-the-docs {
   color: #888;
 }
+
+body {
+  /* Set the background image */
+  background-image: url('/background.png') !important; 
+  
+  /* Make sure the image covers the entire screen */
+  background-size: cover;
+  
+  /* Keep the image fixed in place when scrolling */
+  background-attachment: fixed;
+  
+  /* Center the image */
+  background-position: center;
+  
+  /* Prevent the image from repeating */
+  background-repeat: no-repeat;
+  
+  /* Optional: Add a fallback background color just in case the image loads slowly */
+  background-color: #f5f5f5; 
+}

@@ -6,9 +6,8 @@ const EventSchema = new mongoose.Schema({
   host: { type: String, required: true },    
   eventType: { type: String, enum: ['short_online', 'long_online', 'in_person'], required: true },
   points: { type: Number, required: true },
-  durationMinutes: { type: Number, required: true },
+  durationMinutes: { type: Number, default: 10080, required: true }, 
   startTime: { type: Date, default: Date.now },
-  // Add this field to store custom questions
   questions: [{ type: String }] 
 });
 
