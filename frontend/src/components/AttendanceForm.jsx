@@ -12,10 +12,8 @@ const AttendanceForm = () => {
   const [status, setStatus] = useState('loading'); 
   const [eventDetails, setEventDetails] = useState(null);
   
-  const [formData, setFormData] = useState({ 
-    name: '', surname: '', email: '',
-    motivation: '', commChannel: '', funActivity: '', umuziMetaphor: '', lookingForward: ''
-  });
+  const [formData, setFormData] = useState({ name: '', surname: '', email: '' });
+  const [answers, setAnswers] = useState({});
   const [errorMsg, setErrorMsg] = useState('');
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -29,10 +27,25 @@ const AttendanceForm = () => {
       .catch(() => setStatus('expired'));
   }, [eventId, API_URL]);
 
+  const handleAnswerChange = (index, value) => {
+    setAnswers(prev => ({ ...prev, [index]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Format answers to match the backend expectations
+    const formattedAnswers = (eventDetails.questions || []).map((q, i) => ({
+      question: q,
+      answer: answers[i] || 'No Answer'
+    }));
+
     try {
-      await axios.post(`${API_URL}/api/attend`, { ...formData, eventId });
+      await axios.post(`${API_URL}/api/attend`, { 
+        ...formData, 
+        eventId,
+        answers: formattedAnswers 
+      });
       setStatus('success');
     } catch (err) {
       setErrorMsg(err.response?.data?.error || 'Error submitting');
@@ -62,12 +75,24 @@ const AttendanceForm = () => {
               <TextField label="Email Address" type="email" variant="outlined" fullWidth required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
             </Box>
 
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: { xs: 1, sm: 2 }, borderBottom: '1px solid #eee', pb: 1 }}>Quick Questionnaire</Typography>
-            <TextField label="1. What motivated you to attend today's session?" variant="outlined" fullWidth required multiline rows={2} value={formData.motivation} onChange={e => setFormData({...formData, motivation: e.target.value})} />
-            <TextField label="2. Which channel did you see the comms about today?" variant="outlined" fullWidth required value={formData.commChannel} onChange={e => setFormData({...formData, commChannel: e.target.value})} />
-            <TextField label="3. What do you typically do for fun?" variant="outlined" fullWidth required multiline rows={2} value={formData.funActivity} onChange={e => setFormData({...formData, funActivity: e.target.value})} />
-            <TextField label="4. If Umuzi was a (food/colour/mood/car), what would it be?" variant="outlined" fullWidth required value={formData.umuziMetaphor} onChange={e => setFormData({...formData, umuziMetaphor: e.target.value})} />
-            <TextField label="5. What are you most looking forward to this year?" variant="outlined" fullWidth required multiline rows={2} value={formData.lookingForward} onChange={e => setFormData({...formData, lookingForward: e.target.value})} />
+            {eventDetails.questions && eventDetails.questions.length > 0 && (
+              <>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mt: { xs: 1, sm: 2 }, borderBottom: '1px solid #eee', pb: 1 }}>Questionnaire</Typography>
+                {eventDetails.questions.map((questionText, index) => (
+                  <TextField 
+                    key={index}
+                    label={questionText} 
+                    variant="outlined" 
+                    fullWidth 
+                    required 
+                    multiline 
+                    rows={2} 
+                    value={answers[index] || ''} 
+                    onChange={e => handleAnswerChange(index, e.target.value)} 
+                  />
+                ))}
+              </>
+            )}
 
             <Button variant="contained" size="large" type="submit" sx={{ mt: 2, py: 1.5, fontSize: '1.1rem', fontWeight: 'bold' }}>Confirm Attendance</Button>
           </Box>
@@ -76,4 +101,5 @@ const AttendanceForm = () => {
     </Container>
   );
 };
+
 export default AttendanceForm;

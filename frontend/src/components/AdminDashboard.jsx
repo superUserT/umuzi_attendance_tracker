@@ -15,7 +15,7 @@ const AdminDashboard = () => {
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
-    title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60
+    title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60, questions: ['']
   });
   const [selectedUser, setSelectedUser] = useState(null);
 
@@ -46,12 +46,24 @@ const AdminDashboard = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  const handleQuestionChange = (index, value) => {
+    const newQuestions = [...formData.questions];
+    newQuestions[index] = value;
+    setFormData({ ...formData, questions: newQuestions });
+  };
+
+  const addQuestion = () => setFormData({ ...formData, questions: [...formData.questions, ''] });
+  const removeQuestion = (index) => {
+    const newQuestions = formData.questions.filter((_, i) => i !== index);
+    setFormData({ ...formData, questions: newQuestions });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await axios.post(`${API_URL}/api/events`, formData);
       fetchData(); 
-      setFormData({ title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60 });
+      setFormData({ title: '', description: '', host: '', eventType: 'short_online', durationMinutes: 60, questions: [''] });
     } catch (err) {
       alert("Error creating event");
     }
@@ -62,17 +74,21 @@ const AdminDashboard = () => {
     users.forEach(user => {
       if (user.attendanceLog && user.attendanceLog.length > 0) {
         user.attendanceLog.forEach(log => {
+          const formattedAnswers = log.answers && log.answers.length > 0 
+            ? log.answers.map(a => `Q: ${a.question} | A: ${a.answer}`).join('\n')
+            : "No questions answered";
+
           data.push({
             "First Name": user.name, "Surname": user.surname, "Email": user.email, "Total Points": user.totalPoints,
             "Event Attended": log.eventTitle, "Event Host": log.eventHost, "Points Gained": log.pointsEarned, "Date Scanned": new Date(log.dateScanned).toLocaleString(),
-            "Motivation": log.motivation || "N/A", "Comms Channel": log.commChannel || "N/A", "Fun Activity": log.funActivity || "N/A", "Umuzi Metaphor": log.umuziMetaphor || "N/A", "Looking Forward To": log.lookingForward || "N/A"
+            "Custom Answers": formattedAnswers
           });
         });
       } else {
         data.push({
           "First Name": user.name, "Surname": user.surname, "Email": user.email, "Total Points": user.totalPoints,
           "Event Attended": "N/A", "Event Host": "N/A", "Points Gained": 0, "Date Scanned": "N/A",
-          "Motivation": "N/A", "Comms Channel": "N/A", "Fun Activity": "N/A", "Umuzi Metaphor": "N/A", "Looking Forward To": "N/A"
+          "Custom Answers": "N/A"
         });
       }
     });
@@ -128,6 +144,23 @@ const AdminDashboard = () => {
                   </Select>
                 </FormControl>
                 <TextField label="Duration (Minutes)" type="number" variant="outlined" fullWidth required value={formData.durationMinutes} onChange={e => setFormData({...formData, durationMinutes: e.target.value})} />
+                
+                <Box sx={{ mt: 2, borderTop: '1px solid #eee', pt: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom fontWeight="bold">Custom Questions</Typography>
+                  {formData.questions.map((q, index) => (
+                    <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                      <TextField 
+                        size="small" fullWidth placeholder={`Question ${index + 1}`} 
+                        value={q} onChange={(e) => handleQuestionChange(index, e.target.value)} required 
+                      />
+                      <Button color="error" variant="outlined" onClick={() => removeQuestion(index)}>X</Button>
+                    </Box>
+                  ))}
+                  <Button size="small" variant="text" onClick={addQuestion} startIcon={<Plus size={16} />}>
+                    Add Question
+                  </Button>
+                </Box>
+
                 <Button variant="contained" size="large" type="submit" startIcon={<Plus size={20} />} sx={{ py: 1.5, fontWeight: 'bold' }}>Generate Event</Button>
               </Box>
             </CardContent>
@@ -211,11 +244,15 @@ const AdminDashboard = () => {
                     <Chip label={`+${log.pointsEarned} pts`} size="small" color="success" />
                   </Stack>
                   <Divider sx={{ my: 1 }} />
-                  <Typography variant="caption" display="block" sx={{ mt: 1 }}><b>Motivated by:</b> {log.motivation || 'N/A'}</Typography>
-                  <Typography variant="caption" display="block"><b>Channel seen:</b> {log.commChannel || 'N/A'}</Typography>
-                  <Typography variant="caption" display="block"><b>Fun activity:</b> {log.funActivity || 'N/A'}</Typography>
-                  <Typography variant="caption" display="block"><b>Umuzi as a metaphor:</b> {log.umuziMetaphor || 'N/A'}</Typography>
-                  <Typography variant="caption" display="block"><b>Looking forward to:</b> {log.lookingForward || 'N/A'}</Typography>
+                  {log.answers && log.answers.length > 0 ? (
+                    log.answers.map((ans, i) => (
+                      <Typography key={i} variant="caption" display="block" sx={{ mt: 0.5 }}>
+                        <b>{ans.question}</b>: {ans.answer}
+                      </Typography>
+                    ))
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">No questions answered.</Typography>
+                  )}
                   <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 1.5, textAlign: 'right' }}>
                     Date: {new Date(log.dateScanned).toLocaleDateString()}
                   </Typography>

@@ -11,12 +11,11 @@ const UserSchema = new mongoose.Schema({
     eventHost: String,
     dateScanned: { type: Date, default: Date.now },
     pointsEarned: Number,
-    // 5 New Fields Added Below
-    motivation: String,
-    commChannel: String,
-    funActivity: String,
-    umuziMetaphor: String,
-    lookingForward: String
+    // Replace hardcoded fields with a dynamic answers array
+    answers: [{
+      question: String,
+      answer: String
+    }]
   }]
 });
 
