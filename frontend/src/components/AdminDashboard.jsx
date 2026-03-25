@@ -119,9 +119,17 @@ const AdminDashboard = () => {
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 }, px: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <Box sx={{ textAlign: 'center', mb: { xs: 4, md: 6 } }}>
-        <Typography sx={{ typography: { xs: 'h4', md: 'h3' }, fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-          <Trophy color="#f59e0b" size={40} /> Gamified Attendance
-        </Typography>
+        <Typography sx={{ 
+      color: 'white', 
+      typography: { xs: 'h4', md: 'h3' }, 
+      fontWeight: 'bold', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      gap: 2 
+    }}>
+      <Trophy color="#f59e0b" size={40} /> Gamified Attendance
+    </Typography>
       </Box>
 
       <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
@@ -216,7 +224,18 @@ const AdminDashboard = () => {
       </Grid>
 
       <Box sx={{ mt: { xs: 6, md: 8 }, width: '100%' }}>
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, textAlign: 'center', mb: { xs: 3, md: 4 } }}>Active Events</Typography>
+        <Typography 
+  variant="h5" 
+  gutterBottom 
+  sx={{ 
+    color: 'white', 
+    fontWeight: 600, 
+    textAlign: 'center', 
+    mb: { xs: 3, md: 4 } 
+  }}
+>
+  Active Events
+</Typography>
         <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} justifyContent="center">
           {events.map(event => (
             <Grid item xs={12} sm={6} md={4} key={event._id}>
